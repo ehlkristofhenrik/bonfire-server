@@ -19,7 +19,6 @@ pub enum ManagementApis {
 
 impl ManagementApis {
     
-    #[inline(always)]
     pub async fn get_user_profile(&self, user: &str ) -> Result<String, Box<dyn Error>> {
         match self {
             Self::None => Ok("".to_string()),
@@ -30,7 +29,6 @@ impl ManagementApis {
         }
     }
 
-    #[inline(always)]
     pub async fn get_tasks_for_user(&self, user: &str) -> Result<Vec<Task>, Box<dyn Error>> {
         match self {
             Self::None => Ok(vec![]),
