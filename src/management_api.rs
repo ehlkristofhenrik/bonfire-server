@@ -5,7 +5,13 @@ use std::error::Error;
 // #[cfg(feature = "github")]
 use crate::api_providers::github_api::github_api::GithubApi;
 
+// #[cfg(test)]
+use crate::api_providers::mock_api::mock_api::MockApi;
+
 pub enum ManagementApis {
+    #[cfg(test)]
+    TestApi(MockApi),
+
     None,
     // #[cfg(feature="github")]
     GithubApi(GithubApi),
@@ -29,7 +35,7 @@ pub trait ManagementApi {
     }
 }
 
-#[derive(Serialize, Getters)]
+#[derive(Serialize, Getters, Clone)]
 pub struct Task {
     #[getset(get = "pub", set = "pub")]
     task: String,

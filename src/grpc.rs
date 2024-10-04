@@ -58,9 +58,14 @@ impl Firewall for FirewallService {
         let (issues, role) = match &self.management_api {
             ManagementApis::None => (vec![], "".to_string()),
             // #[cfg(feature = "github")]
-            ManagementApis::GithubApi(x) => (
-                x.get_tasks_for_user(user_str).await.unwrap_or_default(),
-                x.get_user_profile(user_str).await.unwrap_or_default(),
+            ManagementApis::GithubApi(api) => (
+                api.get_tasks_for_user(user_str).await.unwrap_or_default(),
+                api.get_user_profile(user_str).await.unwrap_or_default(),
+            ),
+            // #[cfg(test)]
+            ManagementApis::TestApi(api) => (
+                api.get_tasks_for_user(user_str).await.unwrap_or_default(),
+                api.get_user_profile(user_str).await.unwrap_or_default(),
             ),
         };
 
