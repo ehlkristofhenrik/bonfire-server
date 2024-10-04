@@ -37,9 +37,9 @@ pub trait ManagementApi {
 
 #[derive(Serialize, Getters, Clone)]
 pub struct Task {
-    #[getset(get = "pub", set = "pub")]
-    task: String,
+    #[getset(get = "pub")]
+    pub task: String,
 
-    #[getset(get = "pub", set = "pub")]
-    description: String,
+    #[getset(get = "pub")]
+    pub description: String,
 }
