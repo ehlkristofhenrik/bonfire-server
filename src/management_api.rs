@@ -3,7 +3,6 @@ use serde::Serialize;
 use std::error::Error;
 
 // #[cfg(feature = "github")]
-pub use crate::api_providers::github_api::github_api::GithubApi;
 
 pub enum ManagementApis {
     None,

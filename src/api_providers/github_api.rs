@@ -1,11 +1,11 @@
 // #[cfg(feature="github")]
 pub mod github_api {
-    use crate::config::global_config;
-    use crate::management_api::{ManagementApi, Task};
+    
+    use crate::management_api::ManagementApi;
 
     use octocrab::Octocrab;
     use serde::Deserialize;
-    use std::error::Error;
+    
     use std::sync::Arc;
 
     #[derive(Default, Clone)]

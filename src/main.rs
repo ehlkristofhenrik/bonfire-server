@@ -12,7 +12,6 @@ use tracing_panic::panic_hook;
 use tracing_subscriber::FmtSubscriber;
 
 // #[cfg(f
-use crate::api_providers::github_api::github_api::GithubApi;
 
 const VERSION: &'static str = "1.0.0";
 

@@ -8,17 +8,14 @@ use crate::llama::query_secu_score;
 #[cfg(test)]
 use crate::llama::*;
 
-use crate::management_api::{ManagementApis, Task};
+use crate::management_api::ManagementApis;
 
 use getset::Setters;
 use proto::firewall_server::Firewall;
 pub use proto::firewall_server::FirewallServer;
 use proto::{FirewallReply, FirewallRequest};
 use ring::constant_time::verify_slices_are_equal;
-use std::{
-    net::IpAddr,
-    sync::{Arc, Mutex},
-};
+use std::net::IpAddr;
 pub use tonic::transport::Server;
 use tonic::{Response, Status};
 
