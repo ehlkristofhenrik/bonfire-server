@@ -4,6 +4,7 @@ mod grpc;
 mod llama;
 mod management_api;
 
+use crate::api_providers::github_api::github_api::GithubApi;
 use config::global_config;
 use grpc::{FirewallServer, FirewallService, Server};
 use std::{error::Error, net::IpAddr, str::FromStr};
@@ -11,9 +12,7 @@ use tracing::subscriber::set_global_default;
 use tracing_panic::panic_hook;
 use tracing_subscriber::FmtSubscriber;
 
-// #[cfg(f
-
-const VERSION: &'static str = "1.0.0";
+const VERSION: &str = "1.0.0";
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
@@ -39,10 +38,9 @@ async fn main() -> Result<(), Box<dyn Error>> {
     std::panic::set_hook(Box::new(panic_hook));
 
     // Parse server address
-    let addr = server_addr_str.parse().expect(&format!(
-        "Failed to parse socket address {}",
-        server_addr_str
-    ));
+    let addr = server_addr_str
+        .parse()
+        .unwrap_or_else(|_| panic!("Failed to parse socket address {}", server_addr_str));
 
     // Create firewall service
     let mut firewall = FirewallService::default();
@@ -54,7 +52,10 @@ async fn main() -> Result<(), Box<dyn Error>> {
             global_config
                 .allowed_ip_addrs()
                 .iter()
-                .map(|f| IpAddr::from_str(f).expect(&format!("{} is not a valid IP address", f)))
+                .map(|f| {
+                    IpAddr::from_str(f)
+                        .unwrap_or_else(|_| panic!("{} is not a valid IP address", f))
+                })
                 .collect(),
         )
         // Set model completion url
@@ -62,7 +63,8 @@ async fn main() -> Result<(), Box<dyn Error>> {
             "{}://{}/completion",
             global_config.llm_proto(),
             llm_addr_str,
-        ));
+        ))
+        .set_management_api(management_api::ManagementApis::GithubApi(GithubApi::new()));
 
     // Query model for health information
     let health: serde_json::Value = reqwest::get(format!(

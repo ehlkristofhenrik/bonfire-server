@@ -9,7 +9,7 @@ use crate::api_providers::github_api::github_api::GithubApiConfig;
 
 lazy_static! {
     pub static ref global_config: Config =
-        serde_json::from_str(&read_to_string("config.json").unwrap_or(String::new()))
+        serde_json::from_str(&read_to_string("config.json").unwrap_or_default())
             .unwrap_or_else(|_| {
                 warn!("Failed to load config, using default configuration.");
                 Config::default()

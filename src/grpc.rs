@@ -8,7 +8,10 @@ use crate::llama::query_secu_score;
 #[cfg(test)]
 use crate::llama::*;
 
-use crate::management_api::ManagementApis;
+use crate::{
+    api_providers::github_api::github_api::GithubApi,
+    management_api::{ManagementApi, ManagementApis},
+};
 
 use getset::Setters;
 use proto::firewall_server::Firewall;
@@ -52,14 +55,14 @@ impl Firewall for FirewallService {
         let user_str: &str = request.user.as_str();
 
         // Query user profile
-        /*let Ok(role) = management_api.get_user_profile(user_str).await else {
-            return Err(Status::internal("Failed to query user profile"));
-        };*/
-
-        // Query issues
-        /*let Ok(issues) = management_api.get_tasks_for_user(user_str).await else {
-            return Err(Status::internal("Failed to query project"));
-        };*/
+        let (issues, role) = match &self.management_api {
+            ManagementApis::None => (vec![], "".to_string()),
+            // #[cfg(feature = "github")]
+            ManagementApis::GithubApi(x) => (
+                x.get_tasks_for_user(user_str).await.unwrap_or_default(),
+                x.get_user_profile(user_str).await.unwrap_or_default(),
+            ),
+        };
 
         // Get username string as bytes for const-time comparoson check
         // NOTE! This is important to avoid timing attacks
@@ -81,14 +84,14 @@ impl Firewall for FirewallService {
         }
 
         // Query the score from the LLM
-        // #[cfg(not(test))]
+        #[cfg(not(test))]
         let Ok(score) = query_secu_score(
             self.url.clone(),
             request.command.clone(),
             request.user.clone(),
             request.path.clone(),
-            vec![],
-            "".to_string(),
+            issues,
+            role,
         )
         .await
         else {
@@ -146,7 +149,7 @@ mod tests {
         assert!(res.is_some());
         let res = res.unwrap();
         let res = res.get_ref();
-        assert_eq!(res.allowed, true);
+        assert!(res.allowed);
     }
 
     #[tokio::test]
@@ -179,7 +182,7 @@ mod tests {
         assert!(res.is_some());
         let res = res.unwrap();
         let res = res.get_ref();
-        assert_eq!(res.allowed, false);
+        assert!(!res.allowed);
     }
 
     #[tokio::test]
@@ -212,6 +215,6 @@ mod tests {
         assert!(res.is_some());
         let res = res.unwrap();
         let res = res.get_ref();
-        assert_eq!(res.allowed, false);
+        assert!(!res.allowed);
     }
 }

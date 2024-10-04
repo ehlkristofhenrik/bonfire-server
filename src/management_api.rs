@@ -3,10 +3,12 @@ use serde::Serialize;
 use std::error::Error;
 
 // #[cfg(feature = "github")]
+use crate::api_providers::github_api::github_api::GithubApi;
 
 pub enum ManagementApis {
     None,
-    GithubApi(i32),
+    // #[cfg(feature="github")]
+    GithubApi(GithubApi),
 }
 
 impl Default for ManagementApis {
@@ -16,13 +18,13 @@ impl Default for ManagementApis {
 }
 
 pub trait ManagementApi {
-    async fn get_user_profile(&self, user: &str) -> Result<String, Box<dyn std::error::Error>> {
+    async fn get_user_profile(&self, user: &str) -> Result<String, Box<dyn Error>> {
         todo!();
     }
     async fn get_tasks_for_user(
         &self,
         user: &str,
-    ) -> Result<Vec<crate::management_api::Task>, Box<dyn std::error::Error>> {
+    ) -> Result<Vec<crate::management_api::Task>, Box<dyn Error>> {
         todo!();
     }
 }
