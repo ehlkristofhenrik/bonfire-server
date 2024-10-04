@@ -17,6 +17,31 @@ pub enum ManagementApis {
     GithubApi(GithubApi),
 }
 
+impl ManagementApis {
+    
+    #[inline(always)]
+    pub async fn get_user_profile(&self, user: &str ) -> Result<String, Box<dyn Error>> {
+        match self {
+            Self::None => Ok("".to_string()),
+            // #[cfg(feature="github")]
+            Self::GithubApi( github ) => github.get_user_profile(user).await,
+            #[cfg(test)]
+            Self::TestApi( mock ) => mock.get_user_profile(user).await
+        }
+    }
+
+    #[inline(always)]
+    pub async fn get_tasks_for_user(&self, user: &str) -> Result<Vec<Task>, Box<dyn Error>> {
+        match self {
+            Self::None => Ok(vec![]),
+            // #[cfg(feature="github")]
+            Self::GithubApi( github ) => github.get_tasks_for_user(user).await,
+            #[cfg(test)]
+            Self::TestApi( mock ) => mock.get_tasks_for_user(user).await
+        }
+    }
+}
+
 impl Default for ManagementApis {
     fn default() -> Self {
         Self::None

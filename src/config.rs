@@ -8,12 +8,13 @@ use tracing::warn;
 use crate::api_providers::github_api::github_api::GithubApiConfig;
 
 lazy_static! {
-    pub static ref global_config: Config =
-        serde_json::from_str(&read_to_string("config.json").unwrap_or_default())
-            .unwrap_or_else(|_| {
-                warn!("Failed to load config, using default configuration.");
-                Config::default()
-            });
+    pub static ref global_config: Config = serde_json::from_str(
+        &read_to_string("config.json").unwrap_or_default()
+    )
+    .unwrap_or_else(|_| {
+        warn!("Failed to load config, using default configuration.");
+        Config::default()
+    });
 }
 
 #[derive(Deserialize, Getters, getset::CopyGetters)]
@@ -32,9 +33,6 @@ pub struct Config {
 
     #[getset(get = "pub")]
     allowed_ip_addrs: Vec<String>,
-
-    #[getset(get = "pub")]
-    git_url: String,
 
     #[getset(get = "pub")]
     evaluator_cmd: String,
@@ -67,7 +65,6 @@ impl Default for Config {
             llm_proto: String::from_str("http").expect("Failed to load default config.toml"),
             allowed_users: vec!["root".to_string()],
             allowed_ip_addrs: vec!["127.0.0.1".to_string(), "::1".to_string()],
-            git_url: "gitlab.com".to_string(),
             evaluator_cmd: "".to_string(),
             github_api_config: GithubApiConfig::default(),
         }

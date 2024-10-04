@@ -14,6 +14,7 @@ use crate::{
 };
 
 use getset::Setters;
+use tokio::join;
 use proto::firewall_server::Firewall;
 pub use proto::firewall_server::FirewallServer;
 use proto::{FirewallReply, FirewallRequest};
@@ -55,19 +56,12 @@ impl Firewall for FirewallService {
         let user_str: &str = request.user.as_str();
 
         // Query user profile
-        let (issues, role) = match &self.management_api {
-            ManagementApis::None => (vec![], "".to_string()),
-            // #[cfg(feature = "github")]
-            ManagementApis::GithubApi(api) => (
-                api.get_tasks_for_user(user_str).await.unwrap_or_default(),
-                api.get_user_profile(user_str).await.unwrap_or_default(),
-            ),
-            // #[cfg(test)]
-            ManagementApis::TestApi(api) => (
-                api.get_tasks_for_user(user_str).await.unwrap_or_default(),
-                api.get_user_profile(user_str).await.unwrap_or_default(),
-            ),
-        };
+        let _role = self.management_api.get_user_profile(user_str);
+        let _issues = self.management_api.get_tasks_for_user(user_str);
+        
+        // Hack to allow rust compilation
+        let role = _role.await.unwrap_or_default();
+        let issues = _issues.await.unwrap_or_default();
 
         // Get username string as bytes for const-time comparoson check
         // NOTE! This is important to avoid timing attacks
@@ -89,7 +83,7 @@ impl Firewall for FirewallService {
         }
 
         // Query the score from the LLM
-        #[cfg(not(test))]
+        // #[cfg(not(test))]
         let Ok(score) = query_secu_score(
             self.url.clone(),
             request.command.clone(),
@@ -103,12 +97,14 @@ impl Firewall for FirewallService {
             return Err(Status::permission_denied("You shall not pass"));
         };
 
-        #[cfg(test)]
-        let Ok(score) = Result::<SecuScore, ()>::Ok(SecuScore::default()) else {
-            todo!();
-        };
+        // #[cfg(test)]
+        // let Ok(score) = Result::<SecuScore, ()>::Ok(SecuScore::default()) else {
+        //     todo!();
+        // };
 
         // TODO! Compute the score
+
+        
 
         Ok(Response::new(FirewallReply { allowed: true }))
     }
