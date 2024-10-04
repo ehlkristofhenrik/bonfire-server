@@ -14,7 +14,6 @@ use crate::{
 };
 
 use getset::Setters;
-use tokio::join;
 use proto::firewall_server::Firewall;
 pub use proto::firewall_server::FirewallServer;
 use proto::{FirewallReply, FirewallRequest};
@@ -104,7 +103,7 @@ impl Firewall for FirewallService {
 
         // TODO! Compute the score
 
-        
+
 
         Ok(Response::new(FirewallReply { allowed: true }))
     }
