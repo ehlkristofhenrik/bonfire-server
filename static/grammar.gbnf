@@ -1,0 +1,5 @@
+root ::= Data
+Data ::= "{"   ws   "\"overall_reasoning\":"   ws   string   ","   ws   "\"malignity_reasoning\":"   ws   string   ","   ws   "\"malignity_score\":"   ws   number   ","   ws   "\"severity_reasoning\":"   ws   string   ","   ws   "\"severity_score\":"   ws   number   ","   ws   "\"utility_reasoning\":"   ws   string   ","   ws   "\"utility_score\":"   ws   number   ","   ws   "\"expectance_reasoning\":"   ws   string   ","   ws   "\"expectance_score\":"   ws   number   "}"
+string ::= "\""   ([^"]*){0,100}   "\""
+ws ::= [ \t\n]*
+number ::= [0-9]

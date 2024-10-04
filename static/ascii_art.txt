@@ -1,0 +1,11 @@
+
+  888888ba                    .8888b
+  88    `8b                   88
+ a88aaaa8P' .d8888b. 88d888b. 88aaa  dP 88d888b. .d8888b.
+  88   `8b. 88'  `88 88'  `88 88     88 88'  `88 88ooood8
+  88    .88 88.  .88 88    88 88     88 88       88.
+  88888888P `88888P' dP    dP dP     dP dP       `88888P'
+
+ █ v{}
+ █ Listening on {}
+ █ Connected to LLM at http://{}

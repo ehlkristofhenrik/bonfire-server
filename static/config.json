@@ -1,0 +1,17 @@
+{
+  "server_addr": {
+    "ip": "127.0.0.2",
+    "port": 2345
+  },
+  "llm_addr": {
+    "ip": "127.0.0.1",
+    "port": 8080
+  },
+  "llm_proto": "http",
+  "allowed_users": ["bob", "rob"],
+  "allowed_ip_addrs": ["127.0.0.1"],
+  "git_url": "gitlab.com",
+  "evaluator_cmd": "node main.js",
+  "project": "thesis_demo",
+  "project_owner": "ehlkristofhenrik"
+}

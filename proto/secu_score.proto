@@ -1,0 +1,17 @@
+syntax = "proto3";
+
+package secu_score;
+
+service Firewall {
+    rpc Check( FirewallRequest ) returns ( FirewallReply );
+}
+
+message FirewallRequest {
+    string command = 1;
+    string user    = 2;
+    string path    = 3;
+}
+
+message FirewallReply {
+    bool allowed = 1;
+}
