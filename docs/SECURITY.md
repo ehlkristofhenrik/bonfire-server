@@ -39,36 +39,54 @@ expectations.
 
 ### System design
 
-* Using rust for memory safety
-* Using tonic for grpc connection with reflection disabled
-* Using serde_json for configurability
-* Using tracing for logging
-* using tokio for asynchronous task execution
-* Using llamafile for increased portability, swappability and grammar based constraints
+* Use LLMs to generate description semantic meaning of commands
+* Allow the LLM to ponder on an answer to yield better results
+* Constrain the LLM to give a one-token ( hard to miss ) prediction on the following criteria:
+    * Malignity: how malicious the intent is
+    * Severity: how bad the effects are
+    * Utility: how useful in context of current task
+    * Expectance: how usual the command is with regards to context
+* Calculate probability based on the scores from a machine learning algorithm ( NN, Logistic Regression, etc. )
+* Apply defensive techniques on the client side based on probability ( user deletion etc. )
+
 
 ### System testing
 
-* The rust ecosystem is well known for its security making it a good choice for a security related project
+* Statistical testing has shown a strong correlation between the scores and the simulated environment
+* Larger LLMs tend to do better
+* Needs more testing, synthetic data was unsatisfactory
+* LLama3.2-1B shown lots of false pos, neg ( due to low size ), needs refining in the system prompt
+* LLM is the bottleneck
+* Hallucination is a problem
 
 ### Architecture design
 
-* Simple client-server grpc connection
-* Stateless completions from the LLM http server
-* The core logic is in the server
-* Modular architecture
+* Non-reflective client-server grpc connection for enhanced protection
+* Stateless completions from the LLM http server ( as chat is not needed )
+* The core logic is in the server, reduce risk and computation on client
+* Modular architecture, necessary due to rapid changes in the field + easy support for different LLMs
+* LLM + ML <-> Server <-[Certificate authority]-> Client <-> Shell <-> User 
 
 ### Architecture testing
 
-* Parameters can be altered or spoofed if a malicious actor authenticates successfully
-* DOS attack possible using a different username
-* Username collisions can happen
+* User spoofing -> DOS attack ( denying legitimate users )
+* User creation & deletion weakness ( opt for uid instead in next sprint )
+* Downloading untrusted programs is the main problem
+    * Solution: Have a diff-ed filesystem with security rankings and AI-based script evaluation scoring, ( + hashing metadata to avoid double checking ), out of scope
 
 ### Module design
 
-* gRPC server & client module
-* Github API module
-* LLamafile module
-*
+* Server
+    * Api providers ( modular )
+        * Github
+        * Gitlab
+        * ...
+    * Config ( flexible configuration using JSON )
+    * gRPC implementation
+    * LLM providers through llamafile
+        * Plug & play any Llamafile
+        * Easy distribution, creation and inference
 
----
-Spoofing uuid -> DDOS
+* Client
+    * gRPC implementation
+    * Always quiet mode ( no stderr / stdout )

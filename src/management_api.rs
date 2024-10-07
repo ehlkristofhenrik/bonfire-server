@@ -19,7 +19,7 @@ pub enum ManagementApis {
 
 impl ManagementApis {
     
-    pub async fn get_user_profile(&self, user: &str ) -> Result<String, Box<dyn Error>> {
+    pub async fn get_user_profile(&self, user: &str ) -> Result<String, ()> {
         match self {
             Self::None => Ok("".to_string()),
             // #[cfg(feature="github")]
@@ -29,7 +29,7 @@ impl ManagementApis {
         }
     }
 
-    pub async fn get_tasks_for_user(&self, user: &str) -> Result<Vec<Task>, Box<dyn Error>> {
+    pub async fn get_tasks_for_user(&self, user: &str) -> Result<Vec<Task>, ()> {
         match self {
             Self::None => Ok(vec![]),
             // #[cfg(feature="github")]
@@ -47,13 +47,13 @@ impl Default for ManagementApis {
 }
 
 pub trait ManagementApi {
-    async fn get_user_profile(&self, user: &str) -> Result<String, Box<dyn Error>> {
+    async fn get_user_profile(&self, user: &str) -> Result<String, ()> {
         todo!();
     }
     async fn get_tasks_for_user(
         &self,
         user: &str,
-    ) -> Result<Vec<crate::management_api::Task>, Box<dyn Error>> {
+    ) -> Result<Vec<crate::management_api::Task>, ()> {
         todo!();
     }
 }

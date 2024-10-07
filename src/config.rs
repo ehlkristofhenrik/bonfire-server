@@ -1,4 +1,4 @@
-use getset::Getters;
+use getset::{Getters, Setters};
 use lazy_static::lazy_static;
 use serde::Deserialize;
 use std::{fs::read_to_string, str::FromStr};
@@ -17,7 +17,7 @@ lazy_static! {
     });
 }
 
-#[derive(Deserialize, Getters, getset::CopyGetters)]
+#[derive(Deserialize, Getters, getset::CopyGetters, Setters)]
 pub struct Config {
     #[getset(get = "pub")]
     server_addr: NetPair,
@@ -34,11 +34,11 @@ pub struct Config {
     #[getset(get = "pub")]
     allowed_ip_addrs: Vec<String>,
 
-    #[getset(get = "pub")]
+    #[getset(get = "pub", set = "pub")]
     evaluator_cmd: String,
 
     // #[cfg(feature = "github")]
-    #[getset(get = "pub")]
+    #[getset(get = "pub", set="pub")]
     github_api_config: GithubApiConfig,
 }
 

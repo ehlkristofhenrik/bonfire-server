@@ -5,9 +5,10 @@ mod llama;
 mod management_api;
 
 use crate::api_providers::github_api::github_api::GithubApi;
+use api_providers::github_api::github_api::GithubApiConfig;
 use config::global_config;
 use grpc::{FirewallServer, FirewallService, Server};
-use std::{error::Error, net::IpAddr, str::FromStr};
+use std::{error::Error, net::IpAddr, str::FromStr, time::Duration};
 use tracing::subscriber::set_global_default;
 use tracing_panic::panic_hook;
 use tracing_subscriber::FmtSubscriber;
@@ -42,6 +43,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
         .parse()
         .unwrap_or_else(|_| panic!("Failed to parse socket address {}", server_addr_str));
 
+
     // Create firewall service
     let mut firewall = FirewallService::default();
     firewall
@@ -64,6 +66,8 @@ async fn main() -> Result<(), Box<dyn Error>> {
             global_config.llm_proto(),
             llm_addr_str,
         ))
+        .set_eval_cmd(global_config.evaluator_cmd().clone())
+        .set_timeout_duration(Duration::from_secs(5))
         .set_management_api(management_api::ManagementApis::GithubApi(GithubApi::new()));
 
     // Query model for health information

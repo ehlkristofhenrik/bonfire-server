@@ -8,19 +8,20 @@ use crate::llama::query_secu_score;
 #[cfg(test)]
 use crate::llama::*;
 
-use crate::{
-    api_providers::github_api::github_api::GithubApi,
-    management_api::{ManagementApi, ManagementApis},
-};
+use crate::{config::global_config, management_api::ManagementApis};
 
 use getset::Setters;
 use proto::firewall_server::Firewall;
 pub use proto::firewall_server::FirewallServer;
 use proto::{FirewallReply, FirewallRequest};
 use ring::constant_time::verify_slices_are_equal;
+use core::error;
 use std::net::IpAddr;
 pub use tonic::transport::Server;
 use tonic::{Response, Status};
+use std::process::Command;
+use tracing::{error, warn};
+use std::time::{ Instant, Duration };
 
 #[derive(Default, Setters)]
 pub struct FirewallService {
@@ -35,6 +36,12 @@ pub struct FirewallService {
 
     #[getset(set = "pub")]
     management_api: ManagementApis,
+
+    #[getset(set="pub")]
+    eval_cmd: String,
+
+    #[getset(set = "pub")]
+    timeout_duration: Duration,
 }
 
 #[tonic::async_trait]
@@ -46,6 +53,7 @@ impl Firewall for FirewallService {
     ) -> Result<tonic::Response<FirewallReply>, tonic::Status> {
         // Get users ip address
         let Some(remote_addr) = request.remote_addr() else {
+            error!("Ip address not found for request");
             return Err(Status::invalid_argument("Ip address not found"));
         };
 
@@ -55,12 +63,19 @@ impl Firewall for FirewallService {
         let user_str: &str = request.user.as_str();
 
         // Query user profile
-        let _role = self.management_api.get_user_profile(user_str);
-        let _issues = self.management_api.get_tasks_for_user(user_str);
-        
-        // Hack to allow rust compilation
-        let role = _role.await.unwrap_or_default();
-        let issues = _issues.await.unwrap_or_default();
+        let (role, issues) = tokio::join!(
+            self.management_api.get_user_profile(user_str),
+            self.management_api.get_tasks_for_user(user_str)
+        );
+
+        let Ok(role)= role else {
+            error!("Failed to query user role for {} at {:?}", user_str, &remote_addr.ip());
+            return Err(Status::internal("Failed to query user role"));
+        };
+        let Ok(issues) = issues else {
+            error!("Failed to query issues for {} at {:?}", user_str, &remote_addr.ip());
+            return Err(Status::internal("Faliled to query issues"));
+        };
 
         // Get username string as bytes for const-time comparoson check
         // NOTE! This is important to avoid timing attacks
@@ -78,11 +93,12 @@ impl Firewall for FirewallService {
         // Close connection if either ip or username does not match
         // NOTE! This is important to check for both to avoid timing attacks
         if !user_match || !ip_match {
+            error!("Allowlist does not include {} at {:?} ip: {} user: {}", user_str, &remote_addr.ip(), ip_match, user_match);
             return Ok(tonic::Response::new(FirewallReply { allowed: false }));
         }
 
         // Query the score from the LLM
-        // #[cfg(not(test))]
+        #[cfg(not(test))]
         let Ok(score) = query_secu_score(
             self.url.clone(),
             request.command.clone(),
@@ -93,19 +109,46 @@ impl Firewall for FirewallService {
         )
         .await
         else {
+            error!("Permission denied for {:?}", &remote_addr.ip());
             return Err(Status::permission_denied("You shall not pass"));
         };
 
-        // #[cfg(test)]
-        // let Ok(score) = Result::<SecuScore, ()>::Ok(SecuScore::default()) else {
-        //     todo!();
-        // };
+        #[cfg(test)]
+        let Ok(score) = Result::<SecuScore, ()>::Ok(SecuScore::default()) else {
+            todo!();
+        };
 
         // TODO! Compute the score
 
+        let now = Instant::now();
 
+        let cmd_str: Vec<&str> = self.eval_cmd.split(" ").collect();
 
-        Ok(Response::new(FirewallReply { allowed: true }))
+        let mut cmd = Command::new(cmd_str[0]).args(&cmd_str[1..]).spawn()?;
+
+        let status = loop {
+            if now.elapsed() > self.timeout_duration {
+                error!("Timeout exceeded");
+                break None;
+            }
+
+            match cmd.try_wait() {
+                Ok(Some(status)) => {
+                    break Some(status.success());
+                },
+                Ok(None) => {},
+                Err(_) => {
+                    break None;
+                }
+            }
+        };
+
+        let Some(status) = status else {
+            error!("Failed to calculate result for {} at {:?}", user_str, &remote_addr.ip());
+            return Err(Status::internal("Failed to calculate result"));
+        };
+
+        Ok(Response::new(FirewallReply { allowed: status }))
     }
 }
 
@@ -125,6 +168,9 @@ mod tests {
         let mut firewall: FirewallService = FirewallService::default();
         firewall.set_allowed_ip_addrs(vec![IpAddr::from_str("127.0.0.1").unwrap()]);
         firewall.set_allowed_users(vec!["bob".to_string()]);
+        firewall.set_timeout_duration(Duration::from_secs(1000));
+
+        firewall.set_eval_cmd("ls".to_string());
 
         // Create request
         let mut req = Request::new(FirewallRequest {
@@ -216,5 +262,77 @@ mod tests {
         let res = res.unwrap();
         let res = res.get_ref();
         assert!(!res.allowed);
+    }
+
+    #[tokio::test]
+    async fn test_firewall_check_timeout() {
+        // Construct service
+        let mut firewall: FirewallService = FirewallService::default();
+        firewall.set_allowed_ip_addrs(vec![IpAddr::from_str("192.128.12.3").unwrap()]);
+        firewall.set_allowed_users(vec!["bob".to_string()]);
+        firewall.set_timeout_duration(Duration::from_secs(0));
+
+        firewall.set_eval_cmd("sleep 4".to_string());
+
+        // Create request
+        let mut req = Request::new(FirewallRequest {
+            command: "ls".to_string(),
+            path: "/".to_string(),
+            user: "bob".to_string(),
+        });
+
+        // Set ip addr
+        req.extensions_mut()
+            .insert::<TcpConnectInfo>(TcpConnectInfo {
+                local_addr: Some(SocketAddr::from_str("127.0.0.1:2345").unwrap()),
+                remote_addr: Some(SocketAddr::from_str("127.0.0.1:2345").unwrap()),
+            });
+
+        // Get result
+        let res = firewall.check(req).await;
+
+        // Assertions
+        assert!(res.is_ok());
+        let res = res.ok();
+        assert!(res.is_some());
+        let res = res.unwrap();
+        let res = res.get_ref();
+        assert!(!res.allowed);
+    }
+
+    #[tokio::test]
+    async fn test_firewall_check_unknown_ip() {
+        // Construct service
+        let mut firewall: FirewallService = FirewallService::default();
+        firewall.set_allowed_ip_addrs(vec![IpAddr::from_str("192.128.12.3").unwrap()]);
+        firewall.set_allowed_users(vec!["bob".to_string()]);
+        firewall.set_timeout_duration(Duration::from_secs(0));
+
+        firewall.set_eval_cmd("sleep 4".to_string());
+
+        // Create request
+        let mut req = Request::new(FirewallRequest {
+            command: "ls".to_string(),
+            path: "/".to_string(),
+            user: "bob".to_string(),
+        });
+
+        // Set ip addr
+        req.extensions_mut()
+            .insert::<TcpConnectInfo>(TcpConnectInfo {
+                local_addr: None,
+                remote_addr: None,
+            });
+
+        // Get result
+        let res = firewall.check(req).await;
+
+        // Assertions
+        assert!(res.is_err());
+        let res = res.err();
+        assert!(res.is_some());
+        let res = res.unwrap();
+        assert_eq!(res.message(), "Ip address not found");
+        assert_eq!(res.code(), Status::invalid_argument("").code());
     }
 }

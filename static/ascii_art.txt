@@ -7,5 +7,5 @@
   88888888P `88888P' dP    dP dP     dP dP       `88888P'
 
  █ v{}
- █ Listening on {}
+ █ Listening on https://{}
  █ Connected to LLM at http://{}

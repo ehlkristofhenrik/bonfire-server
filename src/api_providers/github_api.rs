@@ -7,6 +7,7 @@ pub mod github_api {
     };
 
     use octocrab::Octocrab;
+    use tracing::error;
     use serde::Deserialize;
 
     use std::sync::Arc;
@@ -31,21 +32,21 @@ pub mod github_api {
     }
 
     impl ManagementApi for GithubApi {
-        async fn get_user_profile(&self, user: &str) -> Result<String, Box<dyn std::error::Error>> {
-            Ok(self
-                .inner
-                .users(user)
-                .profile()
-                .await?
-                .bio
-                .unwrap_or_default())
+        async fn get_user_profile(&self, user: &str) -> Result<String, ()> {
+            let res = self.inner.users(user).profile().await;
+            if let Ok(res) = res {
+                Ok(res.bio.unwrap_or_default())
+            } else {
+                error!("Failed to query user profile");
+                Err(())
+            }
         }
 
         async fn get_tasks_for_user(
             &self,
             user: &str,
-        ) -> Result<Vec<crate::management_api::Task>, Box<dyn std::error::Error>> {
-            Ok(self
+        ) -> Result<Vec<crate::management_api::Task>, ()> {
+            let res = self
                 .inner
                 .issues(
                     global_config.github_api_config().project_owner.clone(),
@@ -55,13 +56,18 @@ pub mod github_api {
                 .assignee(user)
                 .state(octocrab::params::State::Open)
                 .send()
-                .await?
-                .into_iter()
-                .map(|x| Task {
-                    task: x.title,
-                    description: x.body_text.unwrap_or_default(),
-                })
-                .collect())
+                .await;
+            if let Ok(res) = res {
+                Ok(res
+                    .into_iter()
+                    .map(|x| Task {
+                        task: x.title,
+                        description: x.body_text.unwrap_or_default(),
+                    })
+                    .collect())
+            } else {
+                Err(())
+            }
         }
     }
 }
