@@ -8,20 +8,19 @@ use crate::llama::query_secu_score;
 #[cfg(test)]
 use crate::llama::*;
 
-use crate::{config::global_config, management_api::ManagementApis};
+use crate::management_api::ManagementApis;
 
 use getset::Setters;
 use proto::firewall_server::Firewall;
 pub use proto::firewall_server::FirewallServer;
 use proto::{FirewallReply, FirewallRequest};
 use ring::constant_time::verify_slices_are_equal;
-use core::error;
 use std::net::IpAddr;
+use std::process::Command;
+use std::time::{Duration, Instant};
 pub use tonic::transport::Server;
 use tonic::{Response, Status};
-use std::process::Command;
-use tracing::{error, warn};
-use std::time::{ Instant, Duration };
+use tracing::{error, info};
 
 #[derive(Default, Setters)]
 pub struct FirewallService {
@@ -37,7 +36,7 @@ pub struct FirewallService {
     #[getset(set = "pub")]
     management_api: ManagementApis,
 
-    #[getset(set="pub")]
+    #[getset(set = "pub")]
     eval_cmd: String,
 
     #[getset(set = "pub")]
@@ -68,12 +67,20 @@ impl Firewall for FirewallService {
             self.management_api.get_tasks_for_user(user_str)
         );
 
-        let Ok(role)= role else {
-            error!("Failed to query user role for {} at {:?}", user_str, &remote_addr.ip());
+        let Ok(role) = role else {
+            error!(
+                "Failed to query user role for {} at {:?}",
+                user_str,
+                &remote_addr.ip()
+            );
             return Err(Status::internal("Failed to query user role"));
         };
         let Ok(issues) = issues else {
-            error!("Failed to query issues for {} at {:?}", user_str, &remote_addr.ip());
+            error!(
+                "Failed to query issues for {} at {:?}",
+                user_str,
+                &remote_addr.ip()
+            );
             return Err(Status::internal("Faliled to query issues"));
         };
 
@@ -93,7 +100,13 @@ impl Firewall for FirewallService {
         // Close connection if either ip or username does not match
         // NOTE! This is important to check for both to avoid timing attacks
         if !user_match || !ip_match {
-            error!("Allowlist does not include {} at {:?} ip: {} user: {}", user_str, &remote_addr.ip(), ip_match, user_match);
+            error!(
+                "Allowlist does not include {} at {:?} ip: {} user: {}",
+                user_str,
+                &remote_addr.ip(),
+                ip_match,
+                user_match
+            );
             return Ok(tonic::Response::new(FirewallReply { allowed: false }));
         }
 
@@ -118,36 +131,61 @@ impl Firewall for FirewallService {
             todo!();
         };
 
-        // TODO! Compute the score
+        info!("SecuScore for command {} for user {} at {:?} :: {:?}", request.command.clone(), user_str, &remote_addr.ip(), score);
 
+        // Set timeout
         let now = Instant::now();
 
-        let cmd_str: Vec<&str> = self.eval_cmd.split(" ").collect();
+        // Parse evaluation command string
+        let cmd_str: String = format!(
+            "{} {} {} {} {}",
+            self.eval_cmd,
+            score.malignity_score(),
+            score.severity_score(),
+            score.utility_score(),
+            score.expectance_score()
+        );
+        let cmd_str: Vec<&str> = cmd_str.split(" ").collect();
 
+        // Create child process
         let mut cmd = Command::new(cmd_str[0]).args(&cmd_str[1..]).spawn()?;
 
+        // Wait till exit or timeout
         let status = loop {
+            // Timeout
             if now.elapsed() > self.timeout_duration {
                 error!("Timeout exceeded");
                 break None;
             }
-
+            // Wait for exit
             match cmd.try_wait() {
                 Ok(Some(status)) => {
                     break Some(status.success());
-                },
-                Ok(None) => {},
+                }
+                Ok(None) => {}
                 Err(_) => {
                     break None;
                 }
             }
         };
 
+        // Get status from exited child process 0=allow, 1=deny
         let Some(status) = status else {
-            error!("Failed to calculate result for {} at {:?}", user_str, &remote_addr.ip());
+            error!(
+                "Failed to calculate result for {} at {:?}",
+                user_str,
+                &remote_addr.ip()
+            );
             return Err(Status::internal("Failed to calculate result"));
         };
 
+        if status {
+            info!("Allowed command {} for user {} at {:?}", request.command.clone(), user_str, &remote_addr.ip());
+        } else {
+            error!("Denied command {} for user {} at {:?}", request.command.clone(), user_str, &remote_addr.ip());
+        }
+
+        // Reply to client
         Ok(Response::new(FirewallReply { allowed: status }))
     }
 }

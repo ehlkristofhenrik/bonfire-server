@@ -7,11 +7,12 @@ use std::collections::HashMap;
 use std::error::Error;
 
 #[derive(Deserialize, Debug)]
-pub struct Score {
+struct Score {
+    #[allow(unused)]
     content: String,
 }
 
-#[derive(Default, Deserialize, Getters, CopyGetters)]
+#[derive(Debug, Default, Deserialize, Getters, CopyGetters)]
 pub struct SecuScore {
     // Instructs the model to generate a step by step explaination
     #[allow(unused)]

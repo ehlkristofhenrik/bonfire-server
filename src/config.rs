@@ -4,7 +4,7 @@ use serde::Deserialize;
 use std::{fs::read_to_string, str::FromStr};
 use tracing::warn;
 
-// #[cfg(feature = "github")]
+#[cfg(feature = "github")]
 use crate::api_providers::github_api::github_api::GithubApiConfig;
 
 lazy_static! {
@@ -37,7 +37,7 @@ pub struct Config {
     #[getset(get = "pub", set = "pub")]
     evaluator_cmd: String,
 
-    // #[cfg(feature = "github")]
+    #[cfg(feature = "github")]
     #[getset(get = "pub", set="pub")]
     github_api_config: GithubApiConfig,
 }
@@ -66,6 +66,7 @@ impl Default for Config {
             allowed_users: vec!["root".to_string()],
             allowed_ip_addrs: vec!["127.0.0.1".to_string(), "::1".to_string()],
             evaluator_cmd: "".to_string(),
+            #[cfg(feature="github")]
             github_api_config: GithubApiConfig::default(),
         }
     }

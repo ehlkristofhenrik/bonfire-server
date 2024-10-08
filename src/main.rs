@@ -4,8 +4,9 @@ mod grpc;
 mod llama;
 mod management_api;
 
+#[cfg(feature="github")]
 use crate::api_providers::github_api::github_api::GithubApi;
-use api_providers::github_api::github_api::GithubApiConfig;
+
 use config::global_config;
 use grpc::{FirewallServer, FirewallService, Server};
 use std::{error::Error, net::IpAddr, str::FromStr, time::Duration};
@@ -66,9 +67,18 @@ async fn main() -> Result<(), Box<dyn Error>> {
             global_config.llm_proto(),
             llm_addr_str,
         ))
+        // Set evaluation command, should be external program with params `prog.exe {malignity} {severity} {utility} {expectance}`
         .set_eval_cmd(global_config.evaluator_cmd().clone())
-        .set_timeout_duration(Duration::from_secs(5))
-        .set_management_api(management_api::ManagementApis::GithubApi(GithubApi::new()));
+        // Set timeout
+        .set_timeout_duration(Duration::from_secs(5));
+    
+    #[cfg(feature="github")]
+    firewall
+        // Set github as the management api
+        .set_management_api(
+            management_api::ManagementApis::GithubApi(GithubApi::new())
+        );
+    
 
     // Query model for health information
     let health: serde_json::Value = reqwest::get(format!(

@@ -10,7 +10,6 @@
   "llm_proto": "http",
   "allowed_users": ["ehlkristofhenrik"],
   "allowed_ip_addrs": ["127.0.0.1"],
-  "git_url": "gitlab.com",
   "evaluator_cmd": "node main.js",
   "github_api_config": {
     "project": "thesis_demo",
