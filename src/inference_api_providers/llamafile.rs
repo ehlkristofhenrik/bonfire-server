@@ -1,3 +1,4 @@
+use crate::inference_api::{InferenceApi, SecuScore};
 use crate::management_api::Task;
 use getset::{CopyGetters, Getters};
 use reqwest::Client;
@@ -5,7 +6,6 @@ use serde::Deserialize;
 use serde_json::json;
 use std::collections::HashMap;
 use std::error::Error;
-use crate::inference_api::{InferenceApi, SecuScore};
 
 #[derive(Deserialize, Debug)]
 struct Score {
@@ -15,14 +15,12 @@ struct Score {
 
 #[derive(Clone)]
 pub struct LlamaFile {
-    url: String
+    url: String,
 }
 
 impl LlamaFile {
-    pub fn new( url: String ) -> Self {
-        Self {
-            url
-        }
+    pub fn new(url: String) -> Self {
+        Self { url }
     }
 }
 
@@ -77,5 +75,4 @@ impl InferenceApi for LlamaFile {
 
         Ok(serde_json::from_str(&content)?)
     }
-
 }

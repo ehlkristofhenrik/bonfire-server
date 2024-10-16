@@ -8,18 +8,17 @@ use crate::management_api_providers::github_api::github_api::GithubApi;
 // This is used to avoid dyn traits for object safety
 pub enum ManagementApis {
     None,
-    #[cfg(feature="github")]
+    #[cfg(feature = "github")]
     GithubApi(GithubApi),
 }
 
 impl ManagementApis {
-    
     // Get user profile, should contain role in the organization
-    pub async fn get_user_profile(&self, _user: &str ) -> Result<String, ()> {
+    pub async fn get_user_profile(&self, _user: &str) -> Result<String, ()> {
         match self {
             Self::None => Ok("".to_string()),
-            #[cfg(feature="github")]
-            Self::GithubApi( github ) => github.get_user_profile(_user).await,
+            #[cfg(feature = "github")]
+            Self::GithubApi(github) => github.get_user_profile(_user).await,
         }
     }
 
@@ -27,8 +26,8 @@ impl ManagementApis {
     pub async fn get_tasks_for_user(&self, _user: &str) -> Result<Vec<Task>, ()> {
         match self {
             Self::None => Ok(vec![]),
-            #[cfg(feature="github")]
-            Self::GithubApi( github ) => github.get_tasks_for_user(_user).await,
+            #[cfg(feature = "github")]
+            Self::GithubApi(github) => github.get_tasks_for_user(_user).await,
         }
     }
 }
@@ -41,12 +40,11 @@ impl Default for ManagementApis {
 }
 
 pub trait ManagementApi {
-
     // Get user profile, should describe their role in the organization
     async fn get_user_profile(&self, _user: &str) -> Result<String, ()> {
         todo!();
     }
-    
+
     // Get list of tasks assigned for user
     async fn get_tasks_for_user(
         &self,

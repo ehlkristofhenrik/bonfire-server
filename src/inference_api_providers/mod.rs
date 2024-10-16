@@ -1,2 +1,2 @@
-#[cfg(feature="llamafile")]
+#[cfg(feature = "llamafile")]
 pub mod llamafile;

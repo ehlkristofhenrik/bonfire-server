@@ -109,20 +109,29 @@ impl Firewall for FirewallService {
         }
 
         // Query the score from the LLM
-        let Ok(score) = self.inference_api.clone().get_secu_score(
-            request.command.clone(),
-            request.user.clone(),
-            request.path.clone(),
-            issues,
-            role,
-        )
-        .await
+        let Ok(score) = self
+            .inference_api
+            .clone()
+            .get_secu_score(
+                request.command.clone(),
+                request.user.clone(),
+                request.path.clone(),
+                issues,
+                role,
+            )
+            .await
         else {
             error!("Permission denied for {:?}", &remote_addr.ip());
             return Err(Status::permission_denied("You shall not pass"));
         };
 
-        info!("SecuScore for command {} for user {} at {:?} :: {:?}", request.command.clone(), user_str, &remote_addr.ip(), score);
+        info!(
+            "SecuScore for command {} for user {} at {:?} :: {:?}",
+            request.command.clone(),
+            user_str,
+            &remote_addr.ip(),
+            score
+        );
 
         // Set timeout
         let now = Instant::now();
@@ -171,9 +180,19 @@ impl Firewall for FirewallService {
         };
 
         if status {
-            info!("Allowed command {} for user {} at {:?}", request.command.clone(), user_str, &remote_addr.ip());
+            info!(
+                "Allowed command {} for user {} at {:?}",
+                request.command.clone(),
+                user_str,
+                &remote_addr.ip()
+            );
         } else {
-            error!("Denied command {} for user {} at {:?}", request.command.clone(), user_str, &remote_addr.ip());
+            error!(
+                "Denied command {} for user {} at {:?}",
+                request.command.clone(),
+                user_str,
+                &remote_addr.ip()
+            );
         }
 
         // Reply to client

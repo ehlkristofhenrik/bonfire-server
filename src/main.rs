@@ -1,14 +1,14 @@
-mod management_api_providers;
-mod inference_api_providers;
 mod config;
 mod grpc;
-mod management_api;
 mod inference_api;
+mod inference_api_providers;
+mod management_api;
+mod management_api_providers;
 
-#[cfg(feature="github")]
+#[cfg(feature = "github")]
 use crate::management_api_providers::github_api::github_api::GithubApi;
 
-#[cfg(feature="llamafile")]
+#[cfg(feature = "llamafile")]
 use crate::inference_api_providers::llamafile::LlamaFile;
 
 use config::global_config;
@@ -48,7 +48,6 @@ async fn main() -> Result<(), Box<dyn Error>> {
         .parse()
         .unwrap_or_else(|_| panic!("Failed to parse socket address {}", server_addr_str));
 
-
     // Create firewall service
     let mut firewall = FirewallService::default();
     firewall
@@ -75,19 +74,16 @@ async fn main() -> Result<(), Box<dyn Error>> {
         .set_eval_cmd(global_config.evaluator_cmd().clone())
         // Set timeout
         .set_timeout_duration(Duration::from_secs(5));
-    
-    #[cfg(feature="github")]
+
+    #[cfg(feature = "github")]
     firewall
         // Set github as the management api
-        .set_management_api(
-            management_api::ManagementApis::GithubApi(GithubApi::new())
-        );
-    
-    #[cfg(feature="llamafile")]
-    firewall
-        .set_inference_api(
-            inference_api::InferenceApis::LlamaFile(LlamaFile::new(llm_addr_str.clone()))
-        );
+        .set_management_api(management_api::ManagementApis::GithubApi(GithubApi::new()));
+
+    #[cfg(feature = "llamafile")]
+    firewall.set_inference_api(inference_api::InferenceApis::LlamaFile(LlamaFile::new(
+        llm_addr_str.clone(),
+    )));
 
     // Query model for health information
     let health: serde_json::Value = reqwest::get(format!(

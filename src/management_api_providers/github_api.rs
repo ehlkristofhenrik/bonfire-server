@@ -1,4 +1,4 @@
-#[cfg(feature="github")]
+#[cfg(feature = "github")]
 pub mod github_api {
 
     use crate::{
@@ -7,8 +7,8 @@ pub mod github_api {
     };
 
     use octocrab::Octocrab;
-    use tracing::error;
     use serde::Deserialize;
+    use tracing::error;
 
     use std::sync::Arc;
 

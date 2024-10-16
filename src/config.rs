@@ -38,7 +38,7 @@ pub struct Config {
     evaluator_cmd: String,
 
     #[cfg(feature = "github")]
-    #[getset(get = "pub", set="pub")]
+    #[getset(get = "pub", set = "pub")]
     github_api_config: GithubApiConfig,
 }
 
@@ -66,7 +66,7 @@ impl Default for Config {
             allowed_users: vec!["root".to_string()],
             allowed_ip_addrs: vec!["127.0.0.1".to_string(), "::1".to_string()],
             evaluator_cmd: "".to_string(),
-            #[cfg(feature="github")]
+            #[cfg(feature = "github")]
             github_api_config: GithubApiConfig::default(),
         }
     }

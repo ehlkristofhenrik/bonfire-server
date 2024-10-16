@@ -1,6 +1,6 @@
-use getset::{Getters, CopyGetters};
-use serde::Deserialize;
 use crate::management_api::Task;
+use getset::{CopyGetters, Getters};
+use serde::Deserialize;
 use std::error::Error;
 
 #[derive(Debug, Default, Deserialize, Getters, CopyGetters)]
@@ -42,14 +42,14 @@ pub struct SecuScore {
     expectance_score: u8,
 }
 
-#[cfg(feature="llamafile")]
+#[cfg(feature = "llamafile")]
 use crate::inference_api_providers::llamafile::LlamaFile;
 
 #[derive(Clone)]
 pub enum InferenceApis {
     None,
-    #[cfg(feature="llamafile")]
-    LlamaFile(LlamaFile)
+    #[cfg(feature = "llamafile")]
+    LlamaFile(LlamaFile),
 }
 
 impl Default for InferenceApis {
@@ -60,16 +60,17 @@ impl Default for InferenceApis {
 
 impl InferenceApis {
     pub async fn get_secu_score(
-            self,
-            command: String,
-            user: String,
-            path: String,
-            task: Vec<Task>,
-            role: String ) -> Result<SecuScore, Box<dyn Error>> {
+        self,
+        command: String,
+        user: String,
+        path: String,
+        task: Vec<Task>,
+        role: String,
+    ) -> Result<SecuScore, Box<dyn Error>> {
         match self {
             Self::None => Ok(SecuScore::default()),
-            #[cfg(feature="llamafile")]
-            Self::LlamaFile(llama) => llama.get_secu_score(command, user, path, task, role).await
+            #[cfg(feature = "llamafile")]
+            Self::LlamaFile(llama) => llama.get_secu_score(command, user, path, task, role).await,
         }
     }
 }
@@ -81,5 +82,6 @@ pub trait InferenceApi {
         user: String,
         path: String,
         task: Vec<Task>,
-        role: String ) -> Result<SecuScore, Box<dyn Error>>;
+        role: String,
+    ) -> Result<SecuScore, Box<dyn Error>>;
 }
