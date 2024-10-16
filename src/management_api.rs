@@ -2,7 +2,7 @@ use getset::Getters;
 use serde::Serialize;
 
 #[cfg(feature = "github")]
-use crate::api_providers::github_api::github_api::GithubApi;
+use crate::management_api_providers::github_api::github_api::GithubApi;
 
 // Enum of management apis
 // This is used to avoid dyn traits for object safety

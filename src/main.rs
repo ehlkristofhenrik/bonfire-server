@@ -1,11 +1,15 @@
-mod api_providers;
+mod management_api_providers;
+mod inference_api_providers;
 mod config;
 mod grpc;
-mod llama;
 mod management_api;
+mod inference_api;
 
 #[cfg(feature="github")]
-use crate::api_providers::github_api::github_api::GithubApi;
+use crate::management_api_providers::github_api::github_api::GithubApi;
+
+#[cfg(feature="llamafile")]
+use crate::inference_api_providers::llamafile::LlamaFile;
 
 use config::global_config;
 use grpc::{FirewallServer, FirewallService, Server};
@@ -79,6 +83,11 @@ async fn main() -> Result<(), Box<dyn Error>> {
             management_api::ManagementApis::GithubApi(GithubApi::new())
         );
     
+    #[cfg(feature="llamafile")]
+    firewall
+        .set_inference_api(
+            inference_api::InferenceApis::LlamaFile(LlamaFile::new(llm_addr_str.clone()))
+        );
 
     // Query model for health information
     let health: serde_json::Value = reqwest::get(format!(

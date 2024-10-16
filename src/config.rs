@@ -5,7 +5,7 @@ use std::{fs::read_to_string, str::FromStr};
 use tracing::warn;
 
 #[cfg(feature = "github")]
-use crate::api_providers::github_api::github_api::GithubApiConfig;
+use crate::management_api_providers::github_api::github_api::GithubApiConfig;
 
 lazy_static! {
     pub static ref global_config: Config = serde_json::from_str(

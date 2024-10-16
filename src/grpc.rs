@@ -2,12 +2,7 @@ mod proto {
     tonic::include_proto!("secu_score");
 }
 
-#[cfg(not(test))]
-use crate::llama::query_secu_score;
-
-#[cfg(test)]
-use crate::llama::*;
-
+use crate::inference_api::InferenceApis;
 use crate::management_api::ManagementApis;
 
 use getset::Setters;
@@ -35,6 +30,9 @@ pub struct FirewallService {
 
     #[getset(set = "pub")]
     management_api: ManagementApis,
+
+    #[getset(set = "pub")]
+    inference_api: InferenceApis,
 
     #[getset(set = "pub")]
     eval_cmd: String,
@@ -111,9 +109,7 @@ impl Firewall for FirewallService {
         }
 
         // Query the score from the LLM
-        #[cfg(not(test))]
-        let Ok(score) = query_secu_score(
-            self.url.clone(),
+        let Ok(score) = self.inference_api.clone().get_secu_score(
             request.command.clone(),
             request.user.clone(),
             request.path.clone(),
@@ -124,11 +120,6 @@ impl Firewall for FirewallService {
         else {
             error!("Permission denied for {:?}", &remote_addr.ip());
             return Err(Status::permission_denied("You shall not pass"));
-        };
-
-        #[cfg(test)]
-        let Ok(score) = Result::<SecuScore, ()>::Ok(SecuScore::default()) else {
-            todo!();
         };
 
         info!("SecuScore for command {} for user {} at {:?} :: {:?}", request.command.clone(), user_str, &remote_addr.ip(), score);
