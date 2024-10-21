@@ -111,9 +111,19 @@ expectations.
   * Command executor
 
 ## Unit tests
-* Server
-  * Test working case
-  * Test unknown ip
-  * Test timeout
-  * Test ip denied
-  * Test user denied
+
+> Server
+
+* Test working case
+* Test unknown ip
+* Test timeout
+* Test ip denied
+* Test user denied
+
+> Client
+
+Since the client is fail open, it does not need to be tested.
+
+> Shell
+
+Since the shell is just a wrapper, it does not need to be tested.
