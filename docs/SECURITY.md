@@ -13,28 +13,43 @@ expectations.
 > Server
 
 [✔] Compatibility with API standards
+
 [✔] gRPC for secure communication
+
 [✔] Disable gRPC reflection for improved security
+
 [✔] E2E HTTPS encryption between server and client
+
 [✘] Defense against injection attacks
+
 [✔] Configurability
+
 [✔] Logging for non-repudiation
+
 [✘] Origin authentication
 
 > Client
 
 [✔] gRPC for secure communication
+
 [✔] E2E HTTPS encryption between client and server
+
 [✔] Compile time configurability to avoid spoofing addresses
+
 [✔] Embedded shell environment to restrict spoofing of executable
+
 [✘] Origin authentication
+
 [✔] Implement Fail Open
+
 [✔] Implement Fail Closed strategy
 
 ### Acceptance testing
 
 [✔] Solves the problem of command line attacks
+
 [✔] Costs and time efficiency
+
 [✘] Secure as in fool proof
 
 ### System design
