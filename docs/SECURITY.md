@@ -12,30 +12,30 @@ expectations.
 
 > Server
 
-* Compatibility with API standards
-* gRPC for secure communication
-* Disable gRPC reflection for improved security
-* E2E TLS encryption between server and client
-* Defense against injection attacks
-* Configurability
-* Logging for non-repudiation
-* Origin authentication
+[✔] Compatibility with API standards
+[✔] gRPC for secure communication
+[✔] Disable gRPC reflection for improved security
+[✔] E2E HTTPS encryption between server and client
+[✘] Defense against injection attacks
+[✔] Configurability
+[✔] Logging for non-repudiation
+[✘] Origin authentication
 
 > Client
 
-* gRPC for secure communication
-* E2E TLS encryption between client and server
-* Compile time configurability to avoid spoofing addresses
-* Embedded shell environment to restrict spoofing of executable
-* Origin authentication
-* Implement Fail Open / Fail Closed strategy
+[✔] gRPC for secure communication
+[✔] E2E HTTPS encryption between client and server
+[✔] Compile time configurability to avoid spoofing addresses
+[✔] Embedded shell environment to restrict spoofing of executable
+[✘] Origin authentication
+[✔] Implement Fail Open
+[✔] Implement Fail Closed strategy
 
 ### Acceptance testing
 
-* Solves the problem of command line attacks
-* Has issues due to limitations in LLMs
-* Costs time and efficiency
-* Slow, but works
+[✔] Solves the problem of command line attacks
+[✔] Costs and time efficiency
+[✘] Secure as in fool proof
 
 ### System design
 
@@ -48,7 +48,6 @@ expectations.
     * Expectance: how usual the command is with regards to context
 * Calculate probability based on the scores from a machine learning algorithm ( NN, Logistic Regression, etc. )
 * Apply defensive techniques on the client side based on probability ( user deletion etc. )
-
 
 ### System testing
 
@@ -72,7 +71,7 @@ expectations.
 * User spoofing -> DOS attack ( denying legitimate users )
 * User creation & deletion weakness ( opt for uid instead in next sprint )
 * Downloading untrusted programs is the main problem
-    * Solution: Have a diff-ed filesystem with security rankings and AI-based script evaluation scoring, ( + hashing metadata to avoid double checking ), out of scope
+    * Solution 2: Have a diff-ed filesystem with security rankings and AI-based script evaluation scoring, ( + hashing metadata to avoid double checking ), out of scope
 
 ### Module design
 
@@ -82,11 +81,21 @@ expectations.
         * Gitlab
         * ...
     * Config ( flexible configuration using JSON )
-    * gRPC implementation
+    * ML inference runner
+    * gRPC implementation without reflection
     * LLM providers through llamafile
         * Plug & play any Llamafile
         * Easy distribution, creation and inference
 
 * Client
     * gRPC implementation
-    * Always quiet mode ( no stderr / stdout )
+    * Always quiet mode ( no stderr / stdout ), custom panic handler
+
+* Shell
+  * Memfd executable & init file storage
+  * Command executor
+
+## Unit tests
+* Server
+  * Test working case
+  * Test
