@@ -31,7 +31,18 @@ One benefactor could be the military.
 You can find all components on github under ehlkristofhenrik/bonfire-*.
 
 * Bonfire Server  (grpc server)
+  * Serves Bonfire Client
+  * Queries management API ( github issues )
+  * Queries LLM ( llamafile )
+  * Runs ML inference
 * Bonfire Client  (grpc client)
+  * Communicates to Bonfire Server
+  * Returns success status to shell script in Bonfire Shell
 * Bonfire ML      (neural net)
+  * Translates LLM output parameters to probability
+  * Returns whether the probability is greater than 0.5
 * Bonfire Dataset (dataset for the neural net)
+  * For training the ML component
 * Bonfire Shell   (shell wrapper)
+  * Safe in-memory executor for shell
+  * Initializes shell with script
