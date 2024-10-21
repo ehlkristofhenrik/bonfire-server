@@ -113,4 +113,7 @@ expectations.
 ## Unit tests
 * Server
   * Test working case
-  * Test
+  * Test unknown ip
+  * Test timeout
+  * Test ip denied
+  * Test user denied
