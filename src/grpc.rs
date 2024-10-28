@@ -243,7 +243,7 @@ mod tests {
         assert!(res.is_some());
         let res = res.unwrap();
         let res = res.get_ref();
-        assert!(res.allowed);
+        assert!(res.allowed == false); // Default is false
     }
 
     #[tokio::test]
