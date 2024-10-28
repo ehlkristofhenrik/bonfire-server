@@ -17,6 +17,7 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     - name: Build
+      run: sudo apt install protobuf-compiler -y
       run: cargo build --verbose --features=github,llamafile
     - name: Run tests
       run: cargo test --verbose
