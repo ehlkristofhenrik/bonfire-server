@@ -148,7 +148,7 @@ impl Firewall for FirewallService {
         let mut cmd = Command::new(cmd_str[0]).args(&cmd_str[1..]).spawn()?;
 
         // Wait till exit or timeout
-        let status = loop {
+        let exit_code = loop {
             // Timeout
             if now.elapsed() > self.timeout_duration {
                 error!("Timeout exceeded");
@@ -157,7 +157,7 @@ impl Firewall for FirewallService {
             // Wait for exit
             match cmd.try_wait() {
                 Ok(Some(status)) => {
-                    break Some(status.success());
+                    break status.code();
                 }
                 Ok(None) => {}
                 Err(_) => {
@@ -167,7 +167,7 @@ impl Firewall for FirewallService {
         };
 
         // Get status from exited child process 0=allow, 1=deny
-        let Some(status) = status else {
+        let Some(exit_code) = exit_code else {
             error!(
                 "Failed to calculate result for {} at {:?}",
                 user_str,
@@ -175,21 +175,19 @@ impl Firewall for FirewallService {
             );
             return Err(Status::internal("Failed to calculate result"));
         };
+        
+        let mut status: bool = false;
 
-        if status {
-            info!(
-                "Allowed command {} for user {} at {:?}",
-                request.command.clone(),
-                user_str,
-                &remote_addr.ip()
-            );
-        } else {
-            error!(
-                "Denied command {} for user {} at {:?}",
-                request.command.clone(),
-                user_str,
-                &remote_addr.ip()
-            );
+        match exit_code {
+            0 => status = true,
+            1 => error!("Evaluation failed due to endpoint parsing error"),
+            2 => error!("Evaluation failed due to client connection failed"),
+            3 => error!("Evaluation failed due to current working directory not found"),
+            4 => error!("Evaluation failed due to user not found"),
+            5 => error!("Evaluation failed due to command not set"),
+            6 => error!("Evaluation failed due to response error"),
+            7 => error!("Evaluation failed due to access denied"),
+            _ => error!("Evaluation failed due to unknown error")
         }
 
         // Reply to client
