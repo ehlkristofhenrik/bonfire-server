@@ -64,12 +64,6 @@ async fn main() -> Result<(), Box<dyn Error>> {
                 })
                 .collect(),
         )
-        // Set model completion url
-        .set_url(format!(
-            "{}://{}/completion",
-            global_config.llm_proto(),
-            llm_addr_str,
-        ))
         // Set evaluation command, should be external program with params `prog.exe {malignity} {severity} {utility} {expectance}`
         .set_eval_cmd(global_config.evaluator_cmd().clone())
         // Set timeout
@@ -82,7 +76,11 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
     #[cfg(feature = "llamafile")]
     firewall.set_inference_api(inference_api::InferenceApis::LlamaFile(LlamaFile::new(
-        llm_addr_str.clone(),
+        format!(
+            "{}://{}/completion",
+            global_config.llm_proto(),
+            llm_addr_str,
+        ),
     )));
 
     // Query model for health information

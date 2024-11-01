@@ -26,9 +26,6 @@ pub struct FirewallService {
     allowed_users: Vec<String>,
 
     #[getset(set = "pub")]
-    url: String,
-
-    #[getset(set = "pub")]
     management_api: ManagementApis,
 
     #[getset(set = "pub")]
